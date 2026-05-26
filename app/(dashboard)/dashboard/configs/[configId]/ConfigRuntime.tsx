@@ -149,7 +149,7 @@ export function ConfigRuntime({ config, configId }: ConfigRuntimeProps) {
       )}
 
       {/* Create form */}
-      {viewMode === 'create' && (showForm || layout === 'both') && (
+      {viewMode === 'create' && (showForm || config.layout === 'both') && (
         <div className="card p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-stone-800">New Record</h3>
@@ -198,7 +198,7 @@ export function ConfigRuntime({ config, configId }: ConfigRuntimeProps) {
       )}
 
       {/* Table */}
-      {(showTable || layout === 'both') && viewMode === 'table' && (
+      {(showTable || config.layout === 'both') && viewMode === 'table' && (
         <div className="card p-5 space-y-4">
           {error && (
             <div className="px-3 py-2 rounded bg-red-50 border border-red-200 text-sm text-red-600">
