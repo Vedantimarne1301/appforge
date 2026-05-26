@@ -1,0 +1,115 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // null for OAuth users
+  role          String    @default("user")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  appConfigs  AppConfig[]
+  appRecords  AppRecord[]
+  uploads     Upload[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model AppConfig {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  resource    String   // e.g. "tasks", "invoices"
+  rawConfig   Json     // full JSON config as stored
+  isValid     Boolean  @default(true)
+  validationErrors Json? // store validation errors if any
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appRecords AppRecord[]
+
+  @@index([userId])
+  @@index([resource])
+}
+
+model AppRecord {
+  id        String   @id @default(cuid())
+  configId  String
+  userId    String
+  data      Json     // dynamic record data keyed by field name
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  config AppConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@index([userId])
+}
+
+model Upload {
+  id           String   @id @default(cuid())
+  userId       String
+  configId     String?
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  status       String   @default("pending") // pending | processing | done | failed
+  rowsImported Int?
+  errorLog     Json?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
