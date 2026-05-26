@@ -21,7 +21,7 @@ export function withAuth(handler: Handler) {
   return async function routeHandler(
     req: Request,
     // Next.js passes { params } as the second arg to dynamic route handlers
-    routeContext?: { params?: Record<string, string> | Promise<Record<string, string>> }
+    routeContext: { params: Promise<Record<string, string>> }
   ): Promise<Response> {
     try {
       const session = await auth();
@@ -34,10 +34,7 @@ export function withAuth(handler: Handler) {
       }
 
       // Await params if they are a promise (Next.js 15 async params)
-      const params =
-        routeContext?.params instanceof Promise
-          ? await routeContext.params
-          : routeContext?.params;
+      const params = await routeContext.params;
 
       return handler(req, { userId: session.user.id, params });
     } catch (error) {
